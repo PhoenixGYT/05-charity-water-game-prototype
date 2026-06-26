@@ -1,3 +1,13 @@
+let points = 0;
+let hearts = 3;
+
+function updateStatusBar() {
+  document.getElementById("points").textContent = `Points: ${points}`;
+  document.getElementById("hearts").textContent = "❤️".repeat(hearts);
+}
+updateStatusBar();
+
+
 // ---------------------------
 // LEVEL DATA
 // ---------------------------
@@ -103,42 +113,50 @@ function startLevel(index) {
 // SUBMIT ANSWER
 // ---------------------------
 submitBtn.onclick = () => {
-    const userAnswer = answerInput.value.trim().toLowerCase();
-    const correctAnswer = levels[currentLevel].answer.toLowerCase();
-  
-    if (userAnswer === correctAnswer) {
-        // Confetti burst for correct answer
-        confetti({
-          particleCount: 80,
-          spread: 60,
-          origin: { y: 0.6 }
-        });
-      
-        gameScreen.classList.add("correct-flash");
-      
-        setTimeout(() => {
-          alert("Correct! Level completed.");
-      
-          if (!progress.includes(currentLevel)) {
-            progress.push(currentLevel);
-            localStorage.setItem("progress", JSON.stringify(progress));
-          }
-      
-          gameScreen.classList.add("hidden");
-          gameScreen.classList.remove("correct-flash");
-          renderLevelSelect();
-        }, 500);
+  const userAnswer = answerInput.value.trim().toLowerCase();
+  const correctAnswer = levels[currentLevel].answer.toLowerCase();
+
+  if (userAnswer === correctAnswer) {
+    // Confetti + points
+    confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+    points += 10;
+    updateStatusBar();
+
+    gameScreen.classList.add("correct-flash");
+
+    setTimeout(() => {
+      alert("Correct! Level completed.");
+
+      if (!progress.includes(currentLevel)) {
+        progress.push(currentLevel);
+        localStorage.setItem("progress", JSON.stringify(progress));
       }
-    else {
-      // Add shake animation
-      answerInput.classList.add("shake");
-  
-      setTimeout(() => {
-        answerInput.classList.remove("shake");
-        alert("Incorrect. Try again.");
-      }, 400);
+
+      gameScreen.classList.add("hidden");
+      gameScreen.classList.remove("correct-flash");
+      renderLevelSelect();
+    }, 500);
+
+  } else {
+    // Wrong answer → lose heart
+    hearts -= 1;
+    updateStatusBar();
+
+    answerInput.classList.add("shake");
+
+    setTimeout(() => {
+      answerInput.classList.remove("shake");
+      alert("Incorrect. Try again.");
+    }, 400);
+
+    // Game over
+    if (hearts === 0) {
+      alert("Game Over! You ran out of hearts.");
+      resetGameState();
     }
-  };
+  }
+};
+
   
 document.getElementById("cta-btn").onclick = () => {
   window.open("https://www.charitywater.org", "_blank");
@@ -150,16 +168,20 @@ document.getElementById("close-modal").onclick = () => {
 
 document.getElementById("reset-btn").onclick = () => {
   if (confirm("Are you sure you want to reset your progress?")) {
-    localStorage.removeItem("progress");
-    progress = [];
-
-    // Hide game and end screens
-    gameScreen.classList.add("hidden");
-    endScreen.classList.add("hidden");
-
-    // Re-render level select
-    renderLevelSelect();
-
+    resetGameState();
+    alert("Game reset!");
     alert("Your progress has been reset.");
   }
 };
+
+function resetGameState() {
+  points = 0;
+  hearts = 3;
+  progress = [];
+  localStorage.removeItem("progress");
+
+  updateStatusBar();
+  gameScreen.classList.add("hidden");
+  endScreen.classList.add("hidden");
+  renderLevelSelect();
+}
